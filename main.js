@@ -1,32 +1,21 @@
 import "babel-polyfill";
 
-import {Cluster, GuidGenerator, FrameworkProvider, Configuration} from 'microphone-core';
-import ConsulProvider from 'microphone-consul';
-import HapiProvider from 'microphone-hapi';
-
+import Volvox from 'volvox-core';
+import vconsul from 'volvox-consul';
+import vhapi from 'volvox-hapi';
 import hapi from 'hapi'
-import CustomerController from './customers'
-import Logger from './logger'
 
 async function main() {
-    try {
-        let server = new hapi.Server();
-        let customers = new CustomerController();
-        server.route({method: 'GET', path: '/customers', handler: customers.index});
+    let server = new hapi.Server();
+    server.route({method: 'GET', path: '/customers', handler: (req, reply) => {
+        reply({
+            customerName: "Test customer",
+            customerId: 666
+        });
+    }});
 
-        let logger = new Logger();
-        let configuration = new Configuration();
-
-        let clusterProvider = new ConsulProvider(null, logger);
-        let frameworkProvider = new HapiProvider(configuration, logger);
-        let guidGenerator = new GuidGenerator();
-        let cluster = new Cluster(clusterProvider, frameworkProvider, guidGenerator);
-
-        await cluster.bootstrap(server, "customers", "v1");
-        console.log("STARTED");
-    } catch (error) {
-        console.error(error);
-    }
+    let volvox = new Volvox(vconsul(), vhapi());
+    await volvox.bootstrap(server, "customers", "v1");
 }
 
 main();
